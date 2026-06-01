@@ -48,9 +48,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          registry-url: 'https://npm.pkg.github.com'
+          registry-url: 'https://npm.internal.wazobia.tech'
       - run: npm ci
       - run: npm run build
       - run: npm publish --access restricted
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.WAZOBIA_NPM_TOKEN }}

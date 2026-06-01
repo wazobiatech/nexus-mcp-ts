@@ -49,7 +49,7 @@ async function main() {
   // Validate against schema
   const ajv = new Ajv({ strict: false });
   const schemaPath = path.join(
-    path.dirname(new URL(import.meta.url).pathname),
+    __dirname,
     "../../schemas/manifest.schema.json"
   );
   // Fallback: look in sibling contract repo
