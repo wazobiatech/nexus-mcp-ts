@@ -1,0 +1,80 @@
+import { Manifest, MCPToolDefinition } from "../types/index.js";
+import { hmacMiddleware } from "../middleware/hmac.middleware.js";
+import express, { Request, Response } from "express";
+import * as http from "http";
+
+export interface MCPServerOptions {
+  port: number;
+  hmacSecret: string;
+  manifest: Manifest;
+  tools: MCPToolDefinition[];
+}
+
+/**
+ * Create and start an MCP server with HMAC protection.
+ *
+ * @param options - Server configuration.
+ * @returns HTTP server instance (call `.close()` for graceful shutdown).
+ */
+export function createMCPServer(options: MCPServerOptions): http.Server {
+  const app = express();
+  app.use(express.json());
+
+  // Apply HMAC middleware to all routes
+  app.use(hmacMiddleware(options.hmacSecret));
+
+  // Manifest endpoint
+  app.get("/mcp/manifest", (_req: Request, res: Response) => {
+    res.json(options.manifest);
+  });
+
+  // Tool call endpoint
+  app.post("/mcp/call", async (req: Request, res: Response) => {
+    const { tool, arguments: args } = req.body as {
+      tool: string;
+      arguments: Record<string, unknown>;
+    };
+
+    const definition = options.tools.find((t) => t.name === tool);
+    if (!definition) {
+      res.status(404).json({ error: `tool not found: ${tool}` });
+      return;
+    }
+
+    try {
+      const result = await definition.handler(args);
+      res.json({ result });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || "tool execution failed" });
+    }
+  });
+
+  // Health check
+  app.get("/health", (_req: Request, res: Response) => {
+    res.json({ status: "ok" });
+  });
+
+  const server = app.listen(options.port, () => {
+    console.info(`MCP server listening on :${options.port}`);
+  });
+
+  return server;
+}
+
+/**
+ * Build a stripped manifest (handler-free) suitable for serialization.
+ */
+export function buildManifest(
+  manifest: Manifest,
+  tools: MCPToolDefinition[]
+): Manifest {
+  return {
+    ...manifest,
+    tools: tools.map((t) => ({
+      name: t.name,
+      description: t.description,
+      inputSchema: t.inputSchema as Record<string, unknown>,
+      annotations: t.annotations,
+    })),
+  };
+}

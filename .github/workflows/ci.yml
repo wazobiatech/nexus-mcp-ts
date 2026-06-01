@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main, 'feature/**']
+  pull_request:
+    branches: [main]
+  tags:
+    - 'v*'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Download contract vectors
+        run: |
+          curl -L -o vectors.json \
+            https://raw.githubusercontent.com/wazobiatech/nexus-mcp-contract/v1.0.0/vectors.json
+
+      - name: Run contract vector tests
+        run: npx jest tests/contract.vectors.spec.ts --verbose
+
+      - name: Run unit tests
+        run: npm run test:ci
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://npm.pkg.github.com'
+      - run: npm ci
+      - run: npm run build
+      - run: npm publish --access restricted
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
