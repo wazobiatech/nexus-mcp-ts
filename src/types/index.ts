@@ -1,6 +1,20 @@
 import { JSONSchema7 } from "json-schema";
 
 /**
+ * Request context injected into every MCP tool handler.
+ * Contains the raw HTTP request metadata so services can extract
+ * auth headers (x-project-token, Authorization, etc.).
+ */
+export interface RequestContext {
+  /** All incoming HTTP headers (lowercased by Express). */
+  headers: Record<string, string | string[] | undefined>;
+  /** HTTP method. */
+  method: string;
+  /** Request path (including query string). */
+  path: string;
+}
+
+/**
  * Describes a single tool exposed through the Nexus MCP ecosystem.
  */
 export interface MCPToolDefinition {
@@ -24,8 +38,11 @@ export interface MCPToolDefinition {
   /**
    * Handler is called internally by createMCPServer when Claude invokes the tool.
    * It calls the service's internal service layer — NOT an external HTTP endpoint.
+   *
+   * The second `context` argument contains the raw HTTP request metadata
+   * (headers, method, path) so the handler can extract auth tokens.
    */
-  handler: (args: Record<string, unknown>) => Promise<unknown>;
+  handler: (args: Record<string, unknown>, context: RequestContext) => Promise<unknown>;
 }
 
 /**

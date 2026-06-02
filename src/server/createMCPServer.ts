@@ -41,8 +41,14 @@ export function createMCPServer(options: MCPServerOptions): http.Server {
       return;
     }
 
+    const context = {
+      headers: req.headers,
+      method: req.method,
+      path: req.originalUrl,
+    };
+
     try {
-      const result = await definition.handler(args);
+      const result = await definition.handler(args, context);
       res.json({ result });
     } catch (err: any) {
       res.status(500).json({ error: err.message || "tool execution failed" });
