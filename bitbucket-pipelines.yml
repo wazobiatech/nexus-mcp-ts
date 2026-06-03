@@ -39,8 +39,11 @@ pipelines:
       - step:
           name: Publish to private npm
           deployment: production
+          caches:
+            - node
           script:
-            - echo "//npm.internal.wazobia.tech/:_authToken=${WAZOBIA_NPM_TOKEN}" >> .npmrc
+            - npm ci
+            - echo "//npm.internal.wazobia.tech/:_authToken=${NPM_TOKEN}" >> .npmrc
             - npm run build
             - npm publish --access restricted
           after-script:

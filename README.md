@@ -5,7 +5,7 @@ TypeScript SDK for the Nexus MCP ecosystem. Provides HMAC signing/verification, 
 ## Installation
 
 ```bash
-npm install @wazobiatech/nexus-mcp@1.0.6
+npm install @wazobiatech/nexus-mcp
 ```
 
 ## Usage

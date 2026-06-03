@@ -26,9 +26,11 @@ Blocking PR review issues resolved. Deferred design decisions documented below.
 - Default `--tools` glob changed to `./dist/mcp/tools/*.tools.js`
 - README updated with both Option A (pre-compile) and Option B (ts-node)
 
-### ✅ Publish job hardened
-- `scope: '@wazobiatech'` added to `setup-node` so auth token is associated with the scoped registry
-- Tag↔version guard: CI fails if `git tag` name ≠ `package.json` version (prevents publishing wrong version)
+### ✅ Publish pipeline hardened (Bitbucket)
+- `bitbucket-pipelines.yml` added — this is the active CI (`.github/workflows/ci.yml` deleted)
+- Publish step runs `npm ci` before `npm run build` so `tsc` is available in the fresh container
+- `NPM_TOKEN` env variable wired to `npm.internal.wazobia.tech` via `.npmrc` append
+- Tag↔version guard: pipeline fails if `$BITBUCKET_TAG` ≠ `package.json` version
 
 ### ✅ `exports` map cleaned
 - Removed redundant `./dist/middleware/hmac.middleware` and `./dist/middleware/hmac.middleware.js` entries
@@ -54,5 +56,5 @@ Blocking PR review issues resolved. Deferred design decisions documented below.
 
 ## Before Tagging
 
-1. Bump `package.json` version to the intended release (currently `1.0.5`) — the publish guard will fail if the tag doesn't match.
-2. Confirm `WAZOBIA_NPM_TOKEN` secret is set in the repository settings.
+1. `package.json` is at `1.0.6` — tag `v1.0.6` to publish.
+2. Add `NPM_TOKEN` as a Bitbucket repository variable (Repository settings → Repository variables).
