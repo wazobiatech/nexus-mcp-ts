@@ -51,7 +51,11 @@ process.on("SIGTERM", () => {
 ### Generate Manifest CLI
 
 ```bash
-npx generate-manifest --context ./src/mcp/context.json --tools "./src/mcp/tools/*.tools.ts" --out ./src/mcp/manifest.json
+# Option A — pre-compile first (recommended)
+tsc && npx generate-manifest --context ./src/mcp/context.json --tools "./dist/mcp/tools/*.tools.js" --out ./src/mcp/manifest.json
+
+# Option B — run TypeScript sources directly via ts-node
+npx ts-node ./node_modules/.bin/generate-manifest --context ./src/mcp/context.json --tools "./src/mcp/tools/*.tools.ts" --out ./src/mcp/manifest.json
 ```
 
 ## Testing
