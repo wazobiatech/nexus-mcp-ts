@@ -1,9 +1,9 @@
-import { Request, Response, NextFunction } from "express";
-import { createHmac, timingSafeEqual } from "crypto";
+import { Request, Response, NextFunction } from 'express';
+import { createHmac, timingSafeEqual } from 'crypto';
 
 const MAX_AGE_SECONDS = 300;
-const HEADER_SIGNATURE = "x-signature";
-const HEADER_TIMESTAMP = "x-timestamp";
+const HEADER_SIGNATURE = 'x-signature';
+const HEADER_TIMESTAMP = 'x-timestamp';
 
 /**
  * Build an HTTP 401 error that both NestJS and plain Node.js callers handle
@@ -14,7 +14,7 @@ const HEADER_TIMESTAMP = "x-timestamp";
 function unauthorizedError(message: string): Error {
   try {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { UnauthorizedException } = require("@nestjs/common");
+    const { UnauthorizedException } = require('@nestjs/common');
     return new UnauthorizedException(message);
   } catch {
     return new Error(message);
@@ -23,14 +23,9 @@ function unauthorizedError(message: string): Error {
 
 export { computeSignature };
 
-function computeSignature(
-  method: string,
-  path: string,
-  timestamp: string,
-  secret: string
-): string {
+function computeSignature(method: string, path: string, timestamp: string, secret: string): string {
   const payload = `${method.toUpperCase()}${path}${timestamp}`;
-  return createHmac("sha256", secret).update(payload, "utf-8").digest("hex");
+  return createHmac('sha256', secret).update(payload, 'utf-8').digest('hex');
 }
 
 function isStale(ts: number): boolean {
@@ -50,30 +45,27 @@ export function hmacMiddleware(hmacSecret: string) {
     const ts = req.headers[HEADER_TIMESTAMP] as string | undefined;
 
     if (!sig || !ts) {
-      res.status(401).json({ error: "unauthorized", reason: "missing headers" });
+      res.status(401).json({ error: 'unauthorized', reason: 'missing headers' });
       return;
     }
 
     const timestamp = parseInt(ts, 10);
     if (Number.isNaN(timestamp) || isStale(timestamp)) {
-      res.status(401).json({ error: "unauthorized", reason: "stale timestamp" });
+      res.status(401).json({ error: 'unauthorized', reason: 'stale timestamp' });
       return;
     }
 
     const expected = computeSignature(req.method, req.originalUrl, ts, hmacSecret);
 
     try {
-      const expectedBuf = Buffer.from(expected, "hex");
-      const receivedBuf = Buffer.from(sig, "hex");
-      if (
-        expectedBuf.length !== receivedBuf.length ||
-        !timingSafeEqual(expectedBuf, receivedBuf)
-      ) {
-        res.status(401).json({ error: "unauthorized", reason: "signature mismatch" });
+      const expectedBuf = Buffer.from(expected, 'hex');
+      const receivedBuf = Buffer.from(sig, 'hex');
+      if (expectedBuf.length !== receivedBuf.length || !timingSafeEqual(expectedBuf, receivedBuf)) {
+        res.status(401).json({ error: 'unauthorized', reason: 'signature mismatch' });
         return;
       }
     } catch {
-      res.status(401).json({ error: "unauthorized", reason: "signature mismatch" });
+      res.status(401).json({ error: 'unauthorized', reason: 'signature mismatch' });
       return;
     }
 
@@ -99,29 +91,26 @@ export class HMACGuard {
     const ts = req.headers[HEADER_TIMESTAMP] as string | undefined;
 
     if (!sig || !ts) {
-      throw unauthorizedError("unauthorized: missing headers");
+      throw unauthorizedError('unauthorized: missing headers');
     }
 
     const timestamp = parseInt(ts, 10);
     if (Number.isNaN(timestamp) || isStale(timestamp)) {
-      throw unauthorizedError("unauthorized: stale timestamp");
+      throw unauthorizedError('unauthorized: stale timestamp');
     }
 
     const expected = computeSignature(req.method, req.originalUrl, ts, this.hmacSecret);
 
     try {
-      const expectedBuf = Buffer.from(expected, "hex");
-      const receivedBuf = Buffer.from(sig, "hex");
-      if (
-        expectedBuf.length !== receivedBuf.length ||
-        !timingSafeEqual(expectedBuf, receivedBuf)
-      ) {
-        throw unauthorizedError("unauthorized: signature mismatch");
+      const expectedBuf = Buffer.from(expected, 'hex');
+      const receivedBuf = Buffer.from(sig, 'hex');
+      if (expectedBuf.length !== receivedBuf.length || !timingSafeEqual(expectedBuf, receivedBuf)) {
+        throw unauthorizedError('unauthorized: signature mismatch');
       }
     } catch (e) {
       // Re-throw if it's already our unauthorized error; otherwise treat as mismatch
       if ((e as any)?.status === 401 || (e as any)?.response?.statusCode === 401) throw e;
-      throw unauthorizedError("unauthorized: signature mismatch");
+      throw unauthorizedError('unauthorized: signature mismatch');
     }
 
     return true;

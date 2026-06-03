@@ -31,10 +31,18 @@ function loadVectors(): Vector[] {
   ];
   for (const p of candidates) {
     if (fs.existsSync(p)) {
-      return JSON.parse(fs.readFileSync(p, "utf-8")).vectors as Vector[];
+      const parsed = JSON.parse(fs.readFileSync(p, "utf-8"));
+      if (!Array.isArray(parsed.vectors) || parsed.vectors.length === 0) {
+        throw new Error(
+          `vectors.json at ${p} has no vectors array — file may be corrupt or an error response`,
+        );
+      }
+      return parsed.vectors as Vector[];
     }
   }
-  throw new Error("vectors.json not found");
+  throw new Error(
+    "vectors.json not found — run: cp ../nexus-mcp-contract/vectors.json vectors.json",
+  );
 }
 
 describe("Contract Vectors — production computeSignature", () => {
