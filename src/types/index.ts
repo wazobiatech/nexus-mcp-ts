@@ -1,4 +1,4 @@
-import { JSONSchema7 } from "json-schema";
+import { JSONSchema7 } from 'json-schema';
 
 /**
  * Request context injected into every MCP tool handler.
@@ -76,7 +76,5 @@ export interface Manifest {
   context: ManifestContext;
 
   /** Tools exposed by this service via MCP. */
-  tools: Array<
-    Omit<MCPToolDefinition, "handler"> & { inputSchema: Record<string, unknown> }
-  >;
+  tools: Array<Omit<MCPToolDefinition, 'handler'> & { inputSchema: Record<string, unknown> }>;
 }

@@ -1,7 +1,7 @@
-import { Manifest, MCPToolDefinition } from "../types/index.js";
-import { hmacMiddleware } from "../middleware/hmac.middleware.js";
-import express, { Request, Response } from "express";
-import * as http from "http";
+import { Manifest, MCPToolDefinition } from '../types/index.js';
+import { hmacMiddleware } from '../middleware/hmac.middleware.js';
+import express, { Request, Response } from 'express';
+import * as http from 'http';
 
 export interface MCPServerOptions {
   port: number;
@@ -28,20 +28,24 @@ export function createMCPServer(options: MCPServerOptions): http.Server {
 
   // Health check is mounted BEFORE the HMAC gate so kubelet probes
   // (which don't send x-signature / x-timestamp) receive 200, not 401.
-  app.get("/health", options.healthHandler ?? ((_req: Request, res: Response) => {
-    res.json({ status: "ok" });
-  }));
+  app.get(
+    '/health',
+    options.healthHandler ??
+      ((_req: Request, res: Response) => {
+        res.json({ status: 'ok' });
+      }),
+  );
 
   // HMAC middleware protects all routes registered below this line
   app.use(hmacMiddleware(options.hmacSecret));
 
   // Manifest endpoint
-  app.get("/mcp/manifest", (_req: Request, res: Response) => {
+  app.get('/mcp/manifest', (_req: Request, res: Response) => {
     res.json(options.manifest);
   });
 
   // Tool call endpoint
-  app.post("/mcp/call", async (req: Request, res: Response) => {
+  app.post('/mcp/call', async (req: Request, res: Response) => {
     const { tool, arguments: args } = req.body as {
       tool: string;
       arguments: Record<string, unknown>;
@@ -65,7 +69,7 @@ export function createMCPServer(options: MCPServerOptions): http.Server {
     } catch (err: any) {
       // 400 = tool-level error (bad input, auth, business logic)
       // These should be surfaced to the caller, not swallowed as "service error"
-      res.status(400).json({ error: err.message || "tool execution failed" });
+      res.status(400).json({ error: err.message || 'tool execution failed' });
     }
   });
 
@@ -79,10 +83,7 @@ export function createMCPServer(options: MCPServerOptions): http.Server {
 /**
  * Build a stripped manifest (handler-free) suitable for serialization.
  */
-export function buildManifest(
-  manifest: Manifest,
-  tools: MCPToolDefinition[]
-): Manifest {
+export function buildManifest(manifest: Manifest, tools: MCPToolDefinition[]): Manifest {
   return {
     ...manifest,
     tools: tools.map((t) => ({
