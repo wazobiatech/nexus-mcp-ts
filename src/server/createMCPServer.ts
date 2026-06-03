@@ -26,7 +26,13 @@ export function createMCPServer(options: MCPServerOptions): http.Server {
   const app = express();
   app.use(express.json());
 
-  // Apply HMAC middleware to all routes
+  // Health check is mounted BEFORE the HMAC gate so kubelet probes
+  // (which don't send x-signature / x-timestamp) receive 200, not 401.
+  app.get("/health", options.healthHandler ?? ((_req: Request, res: Response) => {
+    res.json({ status: "ok" });
+  }));
+
+  // HMAC middleware protects all routes registered below this line
   app.use(hmacMiddleware(options.hmacSecret));
 
   // Manifest endpoint
@@ -62,11 +68,6 @@ export function createMCPServer(options: MCPServerOptions): http.Server {
       res.status(400).json({ error: err.message || "tool execution failed" });
     }
   });
-
-  // Health check — delegates to custom handler if provided, otherwise simple ok
-  app.get("/health", options.healthHandler ?? ((_req: Request, res: Response) => {
-    res.json({ status: "ok" });
-  }));
 
   const server = app.listen(options.port, () => {
     console.info(`MCP server listening on :${options.port}`);
