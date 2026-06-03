@@ -1,20 +1,17 @@
 # 📌 Summary
 
 Implements the **TypeScript SDK** for the Nexus MCP ecosystem (ZIN-4661).  
-This package (`@wazobiatech/nexus-mcp`) provides HMAC-SHA256 request signing/verification, MCP server scaffolding, and manifest/tool types so that Node.js Nexus services do not re-implement HMAC logic themselves.
+This package (`@wazobiatech/nexus-mcp`) provides HMAC-SHA256 signing/verification, MCP server scaffolding, and manifest generation so that TypeScript/NestJS Nexus services do not re-implement HMAC logic themselves.
 
 ---
 
 # 🛠️ Type of Change
 
-Select all that apply:
-
-- [ ] 🐛 Bug fix (fixes an issue)
-- [x] ✨ New feature (adds functionality)
-- [ ] 💥 Breaking change (changes existing functionality)
+- [ ] 🐛 Bug fix
+- [x] ✨ New feature
+- [ ] 💥 Breaking change
 - [x] 📖 Documentation update
-- [ ] 🔧 Refactoring (code improvement without changing functionality)
-- [ ] 🚀 Performance improvement
+- [ ] 🔧 Refactoring
 - [x] ✅ Test enhancement
 - [x] 🏗️ Build/configuration change
 
@@ -22,24 +19,25 @@ Select all that apply:
 
 # 🔄 Changes Made
 
-- `src/middleware/hmac.middleware.ts` — Express middleware + NestJS `HMACGuard` with `crypto.timingSafeEqual`
-- `src/server/createMCPServer.ts` — MCP server factory with manifest endpoint, tool call proxy, and graceful shutdown support
-- `src/types/index.ts` — `MCPToolDefinition`, `Manifest`, and `ManifestContext` interfaces aligned with contract schemas
-- `src/cli/generate-manifest.ts` — `generate-manifest` CLI for bundling `context.json` + tool files into `manifest.json`
-- `tests/contract.vectors.spec.ts` — contract vector test suite (16 vectors from `nexus-mcp-contract v1.0.0`)
-- `tests/hmac.middleware.spec.ts` — unit tests for valid ✅ / bad sig ❌ / stale ❌ / missing headers ❌
-- `.github/workflows/ci.yml` — lint, typecheck, contract vectors, unit tests, and publish to `npm.internal.wazobia.tech` on tag
+- `src/middleware/hmac.middleware.ts` — Express `hmacMiddleware` + NestJS `HMACGuard` (throws `UnauthorizedException` → 401, not 500); `computeSignature` exported so tests pin the real signer
+- `src/server/createMCPServer.ts` — `createMCPServer()` factory returning `http.Server`; `/health` mounted before HMAC gate
+- `src/types/index.ts` — `MCPToolDefinition`, `Manifest` types; `handler` stripped from manifest JSON via `Omit`
+- `src/cli/generate-manifest.ts` — CLI with `--context`, `--tools`, `--out`; default glob targets compiled `.js`
+- `tests/contract.vectors.spec.ts` — imports production `computeSignature`; all 16 contract vectors from `nexus-mcp-contract v1.0.0`
+- `tests/hmac.middleware.spec.ts` — valid ✅ / bad sig ❌ / stale ❌ / missing headers ❌ + HMACGuard cases
+- `bitbucket-pipelines.yml` — lint → typecheck → contract vectors → unit tests → tag↔version guard → publish on `v*` tag (uses Node built-in `fetch` — no curl dependency on slim image)
+- `package.json` — version `1.0.6`; redundant `./dist/middleware/...` export entries removed
 
 ---
 
 # 🧪 Testing
 
-- [x] Contract vector tests — all 16 canonical HMAC vectors from `nexus-mcp-contract` pass
-- [x] Unit tests for HMAC middleware/guard (valid ✅, bad sig ❌, stale timestamp ❌, missing headers ❌)
-- [x] TypeScript compile check (`tsc --noEmit`) passes
-- [x] Manual smoke test locally
-- [ ] Integration tests added/updated
-- [ ] End-to-end (E2E) tests added/updated
+- [x] Contract vector tests — all 16 canonical HMAC vectors pass against production `computeSignature`
+- [x] Unit tests for HMAC middleware and guard
+- [x] TypeScript type check passes
+- [x] ESLint passes
+- [ ] Integration tests
+- [ ] E2E tests
 
 ---
 
@@ -48,37 +46,37 @@ Select all that apply:
 - [x] Local development
 - [ ] Staging
 - [ ] Production
-- [ ] Other (specify):
 
 ---
 
 # 📸 Screenshots / Demos
 
-N/A — No UI redesign
+N/A
 
 ---
 
 # 🔗 Related Issues / Tickets
 
-- **Blocks:** ZIN-4638, ZIN-4639, ZIN-4640 (Mercury MCP), ZIN-4655-T2/T3 (Aggregator manifest & tool routing)
+- **Blocks:** ZIN-4638, ZIN-4639, ZIN-4640 (Mercury MCP)
 - **Blocked by:** ZIN-4660 (nexus-mcp-contract v1.0.0)
 
 ---
 
-# 📝 Release Notes (for tag `v1.0.0`)
+# 📝 Release Notes (for tag `v1.0.6`)
 
-- HMAC-SHA256 signing/verification (Express middleware + NestJS guard)
-- MCP server factory with manifest and tool-call endpoints
-- `MCPToolDefinition` and `Manifest` TypeScript types
-- `generate-manifest` CLI for service manifest generation
-- Full contract vector test coverage
+- HMAC-SHA256 Express middleware and NestJS guard
+- `computeSignature` exported for contract vector pinning
+- `HMACGuard` now returns 401 (via `UnauthorizedException`) instead of 500
+- `createMCPServer()` returns `http.Server` for graceful shutdown
+- `generate-manifest` CLI defaults to compiled `.js` tool files
 
 ---
 
 # ✅ Pre-merge Checklist
 
-- [x] CI passes (lint + typecheck + tests)
+- [x] CI passes (typecheck + lint + contract vectors + unit tests)
 - [x] Contract vector tests pass against `nexus-mcp-contract v1.0.0`
-- [x] README updated with install/usage examples
-- [x] Version bumped to `1.0.0`
+- [x] README updated
+- [x] Version bumped to `1.0.6`
+- [x] `NPM_TOKEN` Bitbucket repo variable set before tagging
 - [ ] SDK team review sign-off
