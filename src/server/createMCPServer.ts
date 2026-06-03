@@ -8,6 +8,12 @@ export interface MCPServerOptions {
   hmacSecret: string;
   manifest: Manifest;
   tools: MCPToolDefinition[];
+  /**
+   * Optional custom health handler. When provided, it replaces the default
+   * `GET /health → { status: "ok" }` with a real health check implementation.
+   * The handler receives the Express Request/Response and should call res.json().
+   */
+  healthHandler?: (req: Request, res: Response) => void | Promise<void>;
 }
 
 /**
@@ -57,10 +63,10 @@ export function createMCPServer(options: MCPServerOptions): http.Server {
     }
   });
 
-  // Health check
-  app.get("/health", (_req: Request, res: Response) => {
+  // Health check — delegates to custom handler if provided, otherwise simple ok
+  app.get("/health", options.healthHandler ?? ((_req: Request, res: Response) => {
     res.json({ status: "ok" });
-  });
+  }));
 
   const server = app.listen(options.port, () => {
     console.info(`MCP server listening on :${options.port}`);
