@@ -10,7 +10,8 @@ definitions:
           - npm ci
           - npm run typecheck
           - npm run lint
-          - node -e "fetch('https://raw.githubusercontent.com/wazobiatech/nexus-mcp-contract/v1.0.0/vectors.json').then(r=>r.text()).then(t=>require('fs').writeFileSync('vectors.json',t))"
+          - git clone --depth 1 git@bitbucket.org:wazobiatech/nexus-mcp-contract.git ../nexus-mcp-contract
+          - cp ../nexus-mcp-contract/vectors.json vectors.json
           - npm run test:ci
           - npm run build
 
