@@ -1,6 +1,13 @@
-import { createHmac } from "crypto";
+/**
+ * Contract vector tests — pin the PRODUCTION computeSignature function
+ * (not a local copy) against vectors.json from nexus-mcp-contract.
+ *
+ * This ensures that if the middleware's canonicalization ever drifts from
+ * the contract, these tests catch it.
+ */
 import * as fs from "fs";
 import * as path from "path";
+import { computeSignature } from "../src/middleware/hmac.middleware";
 
 interface Vector {
   id: string;
@@ -30,16 +37,11 @@ function loadVectors(): Vector[] {
   throw new Error("vectors.json not found");
 }
 
-function sign(method: string, path: string, timestamp: string, secret: string): string {
-  const payload = `${method.toUpperCase()}${path}${timestamp}`;
-  return createHmac("sha256", secret).update(payload, "utf-8").digest("hex");
-}
-
-describe("Contract Vectors", () => {
+describe("Contract Vectors — production computeSignature", () => {
   const vectors = loadVectors();
 
   it.each(vectors)("$id — $description", (v) => {
-    const got = sign(v.input.method, v.input.path, v.input.timestamp, v.input.secret);
+    const got = computeSignature(v.input.method, v.input.path, v.input.timestamp, v.input.secret);
     expect(got).toBe(v.expected["x-signature"]);
   });
 });

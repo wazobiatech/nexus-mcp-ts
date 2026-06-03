@@ -5,6 +5,24 @@ const MAX_AGE_SECONDS = 300;
 const HEADER_SIGNATURE = "x-signature";
 const HEADER_TIMESTAMP = "x-timestamp";
 
+/**
+ * Build an HTTP 401 error that both NestJS and plain Node.js callers handle
+ * correctly. When @nestjs/common is available (optional peer dep) we throw
+ * UnauthorizedException so NestJS returns 401; otherwise we throw a plain
+ * Error and let the caller decide (express middleware returns 401 directly).
+ */
+function unauthorizedError(message: string): Error {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { UnauthorizedException } = require("@nestjs/common");
+    return new UnauthorizedException(message);
+  } catch {
+    return new Error(message);
+  }
+}
+
+export { computeSignature };
+
 function computeSignature(
   method: string,
   path: string,
@@ -81,12 +99,12 @@ export class HMACGuard {
     const ts = req.headers[HEADER_TIMESTAMP] as string | undefined;
 
     if (!sig || !ts) {
-      throw new Error("unauthorized: missing headers");
+      throw unauthorizedError("unauthorized: missing headers");
     }
 
     const timestamp = parseInt(ts, 10);
     if (Number.isNaN(timestamp) || isStale(timestamp)) {
-      throw new Error("unauthorized: stale timestamp");
+      throw unauthorizedError("unauthorized: stale timestamp");
     }
 
     const expected = computeSignature(req.method, req.originalUrl, ts, this.hmacSecret);
@@ -98,10 +116,12 @@ export class HMACGuard {
         expectedBuf.length !== receivedBuf.length ||
         !timingSafeEqual(expectedBuf, receivedBuf)
       ) {
-        throw new Error("unauthorized: signature mismatch");
+        throw unauthorizedError("unauthorized: signature mismatch");
       }
-    } catch {
-      throw new Error("unauthorized: signature mismatch");
+    } catch (e) {
+      // Re-throw if it's already our unauthorized error; otherwise treat as mismatch
+      if ((e as any)?.status === 401 || (e as any)?.response?.statusCode === 401) throw e;
+      throw unauthorizedError("unauthorized: signature mismatch");
     }
 
     return true;

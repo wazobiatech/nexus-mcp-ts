@@ -14,7 +14,12 @@ function parseArg(flag: string, defaultValue: string): string {
 
 async function main() {
   const contextPath = parseArg("--context", "./src/mcp/context.json");
-  const toolsGlob = parseArg("--tools", "./src/mcp/tools/*.tools.ts");
+  // Default targets compiled .js files. The CLI runs as plain Node (CommonJS)
+  // and cannot require() TypeScript without ts-node. If your tools are still
+  // in .ts, either:
+  //   a) Pre-compile first: tsc && generate-manifest --tools ./dist/mcp/tools/*.tools.js
+  //   b) Run via ts-node: ts-node ./node_modules/.bin/generate-manifest --tools ./src/mcp/tools/*.tools.ts
+  const toolsGlob = parseArg("--tools", "./dist/mcp/tools/*.tools.js");
   const outPath = parseArg("--out", "./src/mcp/manifest.json");
 
   // Load context

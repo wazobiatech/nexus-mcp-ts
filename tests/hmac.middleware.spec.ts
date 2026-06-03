@@ -1,10 +1,9 @@
 import { Request, Response, NextFunction } from "express";
-import { hmacMiddleware, HMACGuard } from "../src/middleware/hmac.middleware";
-import { createHmac } from "crypto";
+import { hmacMiddleware, HMACGuard, computeSignature } from "../src/middleware/hmac.middleware";
 
+/** Thin wrapper — tests use computeSignature directly so any drift is caught here too. */
 function sign(method: string, path: string, timestamp: string, secret: string): string {
-  const payload = `${method.toUpperCase()}${path}${timestamp}`;
-  return createHmac("sha256", secret).update(payload, "utf-8").digest("hex");
+  return computeSignature(method, path, timestamp, secret);
 }
 
 describe("hmacMiddleware", () => {

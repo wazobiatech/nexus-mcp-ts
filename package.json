@@ -25,26 +25,6 @@
         "default": "./dist/middleware/hmac.middleware.js"
       }
     },
-    "./dist/middleware/hmac.middleware": {
-      "import": {
-        "types": "./dist/middleware/hmac.middleware.d.ts",
-        "default": "./dist/middleware/hmac.middleware.js"
-      },
-      "require": {
-        "types": "./dist/middleware/hmac.middleware.d.ts",
-        "default": "./dist/middleware/hmac.middleware.js"
-      }
-    },
-    "./dist/middleware/hmac.middleware.js": {
-      "import": {
-        "types": "./dist/middleware/hmac.middleware.d.ts",
-        "default": "./dist/middleware/hmac.middleware.js"
-      },
-      "require": {
-        "types": "./dist/middleware/hmac.middleware.d.ts",
-        "default": "./dist/middleware/hmac.middleware.js"
-      }
-    },
     "./server": {
       "import": {
         "types": "./dist/server/createMCPServer.d.ts",
