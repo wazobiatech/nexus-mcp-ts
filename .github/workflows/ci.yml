@@ -48,7 +48,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          registry-url: 'https://npm.internal.wazobia.tech'
+          registry-url: 'https://registry.npmjs.org/'
           scope: '@wazobiatech'
       - run: npm ci
       - name: Assert tag matches package.json version
@@ -61,6 +61,6 @@ jobs:
           fi
           echo "✅ Tag $TAG matches package.json version"
       - run: npm run build
-      - run: npm publish --access restricted
+      - run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.WAZOBIA_NPM_TOKEN }}

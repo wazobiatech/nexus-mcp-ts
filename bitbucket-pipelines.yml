@@ -40,8 +40,8 @@ pipelines:
           name: Publish to private npm
           deployment: production
           script:
-            - echo "//npm.internal.wazobia.tech/:_authToken=${WAZOBIA_NPM_TOKEN}" >> .npmrc
+            - echo "//registry.npmjs.org/:_authToken=${WAZOBIA_NPM_TOKEN}" >> .npmrc
             - npm run build
-            - npm publish --access restricted
+            - npm publish --access public
           after-script:
             - rm -f .npmrc
