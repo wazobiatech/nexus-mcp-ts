@@ -51,7 +51,9 @@ export function createMCPServer(options: MCPServerOptions): http.Server {
       const result = await definition.handler(args, context);
       res.json({ result });
     } catch (err: any) {
-      res.status(500).json({ error: err.message || "tool execution failed" });
+      // 400 = tool-level error (bad input, auth, business logic)
+      // These should be surfaced to the caller, not swallowed as "service error"
+      res.status(400).json({ error: err.message || "tool execution failed" });
     }
   });
 

@@ -1,11 +1,5 @@
 import { Request, Response, NextFunction } from "express";
 import { createHmac, timingSafeEqual } from "crypto";
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-  UnauthorizedException,
-} from "@nestjs/common";
 
 const MAX_AGE_SECONDS = 300;
 const HEADER_SIGNATURE = "x-signature";
@@ -72,24 +66,27 @@ export function hmacMiddleware(hmacSecret: string) {
 /**
  * NestJS guard that validates HMAC-SHA256 signatures.
  *
- * Inject with `@UseGuards(new HMACGuard(secret))` or bind via a custom provider.
+ * Does not use @Injectable() so it works without reflect-metadata
+ * in non-NestJS projects. NestJS resolves guards by duck-typing
+ * the canActivate method — the decorator is not required.
+ *
+ * Usage: @UseGuards(new HMACGuard(secret))
  */
-@Injectable()
-export class HMACGuard implements CanActivate {
+export class HMACGuard {
   constructor(private readonly hmacSecret: string) {}
 
-  canActivate(context: ExecutionContext): boolean {
-    const req = context.switchToHttp().getRequest<Request>();
+  canActivate(context: { switchToHttp: () => { getRequest: () => Request } }): boolean {
+    const req = context.switchToHttp().getRequest() as Request;
     const sig = req.headers[HEADER_SIGNATURE] as string | undefined;
     const ts = req.headers[HEADER_TIMESTAMP] as string | undefined;
 
     if (!sig || !ts) {
-      throw new UnauthorizedException("missing headers");
+      throw new Error("unauthorized: missing headers");
     }
 
     const timestamp = parseInt(ts, 10);
     if (Number.isNaN(timestamp) || isStale(timestamp)) {
-      throw new UnauthorizedException("stale timestamp");
+      throw new Error("unauthorized: stale timestamp");
     }
 
     const expected = computeSignature(req.method, req.originalUrl, ts, this.hmacSecret);
@@ -101,10 +98,10 @@ export class HMACGuard implements CanActivate {
         expectedBuf.length !== receivedBuf.length ||
         !timingSafeEqual(expectedBuf, receivedBuf)
       ) {
-        throw new UnauthorizedException("signature mismatch");
+        throw new Error("unauthorized: signature mismatch");
       }
     } catch {
-      throw new UnauthorizedException("signature mismatch");
+      throw new Error("unauthorized: signature mismatch");
     }
 
     return true;
