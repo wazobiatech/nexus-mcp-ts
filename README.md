@@ -8,6 +8,21 @@ TypeScript SDK for the Nexus MCP ecosystem. Provides HMAC signing/verification, 
 npm install @wazobiatech/nexus-mcp
 ```
 
+### Peer dependencies
+
+`@nestjs/common` is a required peer dependency because `HMACGuard` uses `Injectable` and `UnauthorizedException` at runtime. Express-only consumers don't need it; NestJS consumers do.
+
+```bash
+# NestJS users
+npm install @wazobiatech/nexus-mcp @nestjs/common
+# plus, in your process entry: import 'reflect-metadata';
+```
+
+```bash
+# Express-only users
+npm install @wazobiatech/nexus-mcp
+```
+
 ## Usage
 
 ### HMAC Middleware (Express)
