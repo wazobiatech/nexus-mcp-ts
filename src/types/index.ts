@@ -57,7 +57,40 @@ export interface ManifestContext {
 }
 
 /**
+ * One non-GraphQL HTTP endpoint exposed by the service (health, metrics,
+ * webhooks, internal APIs). The MCP /mcp/manifest and /mcp/call endpoints
+ * are intentionally NOT listed here — they are the transport, not the API.
+ */
+export interface ManifestRestEndpoint {
+  /**
+   * HTTP method. Typed as plain string rather than a literal union so
+   * consumers populating this from `JSON.parse` (e.g. reading
+   * context.json) don't have to widen or cast each value. The contract
+   * schema (`nexus-mcp-contract/schemas/manifest.schema.json`) still
+   * validates the actual value is one of GET/POST/PUT/PATCH/DELETE.
+   */
+  method: string;
+  /** URL path, may include Express-style :param placeholders. */
+  path: string;
+  /** Auth requirement. Use 'none' for public, or a value from Manifest.auth_planes. */
+  auth: string;
+  /** Human-readable description of what the endpoint does. */
+  description: string;
+  /** Optional schema of the request body as field-name -> type-description strings. */
+  body?: Record<string, string>;
+  /** Optional description of the response shape. */
+  returns?: string;
+}
+
+/**
  * Describes a Nexus service's domain context and the tools it exposes via MCP.
+ *
+ * The optional catalog fields (does_not_own, emits, consumes, graphql_queries,
+ * graphql_mutations, known_gaps, auth_planes, dependencies, rest_endpoints)
+ * are populated by the service's generate-manifest script from hand-authored
+ * context.json (or equivalent). The aggregator passes them through verbatim
+ * on /public/services/{namespace}/manifest; the rest of the aggregator only
+ * reads name/namespace/version/description/context/tools.
  */
 export interface Manifest {
   /** Human-readable service name. */
@@ -74,6 +107,34 @@ export interface Manifest {
 
   /** DDD domain context. */
   context: ManifestContext;
+
+  /** Things this service explicitly does NOT own (delegated elsewhere). */
+  does_not_own?: string[];
+
+  /** Domain events emitted by this service (Kafka topics, internal events). */
+  emits?: string[];
+
+  /** Domain events consumed from other services. */
+  consumes?: string[];
+
+  /** Names of GraphQL Query operations exposed by this service. */
+  graphql_queries?: string[];
+
+  /** Names of GraphQL Mutation operations exposed by this service. */
+  graphql_mutations?: string[];
+
+  /** Declared unimplemented or partially-implemented features. */
+  known_gaps?: string[];
+
+  /** Auth mechanisms this service accepts. Canonical values:
+   *  'user-jwt' | 'service-token' | 'project-token' | 'hmac'. */
+  auth_planes?: string[];
+
+  /** Other Nexus services this service depends on. */
+  dependencies?: string[];
+
+  /** Non-GraphQL HTTP endpoints exposed by this service. */
+  rest_endpoints?: ManifestRestEndpoint[];
 
   /** Tools exposed by this service via MCP. */
   tools: Array<Omit<MCPToolDefinition, 'handler'> & { inputSchema: Record<string, unknown> }>;
