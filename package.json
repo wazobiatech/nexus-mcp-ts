@@ -1,6 +1,6 @@
 {
   "name": "@wazobiatech/nexus-mcp",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "TypeScript SDK for Nexus MCP — HMAC middleware, server factory, and manifest generation",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -86,7 +86,6 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^0.5.0",
     "ajv": "^8.14.0",
     "express": "^4.19.2",
     "glob": "^10.4.1"
